@@ -1,4 +1,5 @@
 import tkinter
+import tkinter.messagebox
 import random
 import time
 
@@ -9,6 +10,7 @@ class App:
         self.window.geometry("700x500")
         self.game_running = False
         self.score = 0
+        self.high_score = 0
 
         self.show_buttons()
         self.start_button = tkinter.Button(self.window, text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
@@ -28,20 +30,30 @@ class App:
         
     
     def start_game(self) -> None:
+        duration = 5
         if not self.game_running:
             start_time = time.time()
-            while start_time + 30 >= time.time():
+            while start_time + duration >= time.time():
                 self.game_running = True
                 random_button: GameButton = random.choice(self.buttons)
                 random_button.change_color()
-                while random_button.highlighted == True:
-                    time_left = int(30-(time.time()-start_time))
+                while random_button.highlighted == True and start_time + duration >= time.time():
+                    time_left = int(duration-(time.time()-start_time))
                     self.time_label.config(text=str(time_left))
                     self.window.update()
+                self.score += 1
             self.game_running = False
+            self.show_end_msg()
             
-
-
+    def show_end_msg(self) -> None:
+        if self.score > self.high_score:
+            self.high_score = self.score
+            highscore_msg = tkinter.messagebox.showinfo(title="NEW HIGHSCORE", \
+                                                        message=f"Congratulation, you reached a new highscore!\
+                                                        \nYour highscore: {self.high_score}")
+        else:
+            game_stats_msg = tkinter.messagebox.showinfo(title="Game stats", message=f"Your score: {self.score} \
+                                                        \nYour highscore: {self.high_score}")
 
 
 class GameButton:
