@@ -12,7 +12,8 @@ class App:
 
         self.show_buttons()
         self.start_button = tkinter.Button(self.window, text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
-        self.time_label = tkinter.Label(self.window, text="Time: 30", height=2, width=10).place(x=300, y=400)
+        self.time_label = tkinter.Label(self.window, text="Time: 30", height=2, width=10)
+        self.time_label.place(x=300, y=400)
 
         self.window.mainloop()
  
@@ -34,6 +35,8 @@ class App:
                 random_button: GameButton = random.choice(self.buttons)
                 random_button.change_color()
                 while random_button.highlighted == True:
+                    time_left = int(30-(time.time()-start_time))
+                    self.time_label.config(text=str(time_left))
                     self.window.update()
             self.game_running = False
             
