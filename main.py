@@ -35,6 +35,8 @@ class App:
                 random_button.change_color()
                 while random_button.highlighted == True:
                     self.window.update()
+            self.game_running = False
+            
 
 
 
