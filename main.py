@@ -16,11 +16,15 @@ class App:
 
         self.show_buttons()
         self.start_button = tkinter.Button(self.window, text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
+        self.exit_button = tkinter.Button(self.window, text="Exit", command=self.exit_app, height=2, width=10).place(x=550, y=400)
         self.time_label = tkinter.Label(self.window, text="Time: 30", height=2, width=10)
         self.time_label.place(x=300, y=400)
 
         self.window.mainloop()
  
+    def exit_app(self) -> None:
+        if tkinter.messagebox.askyesno(title="EXIT", message="Do you really want to exit the app?"):
+            self.window.quit()
 
     def show_buttons(self) -> None:
         self.buttons: list[GameButton] = []
