@@ -13,6 +13,7 @@ class App:
         self.missed_clicks = 0
         self.high_score = 0
         self.accuracy = 100
+        self.high_score_accuracy = 100
 
         self.show_buttons()
         self.start_button = tkinter.Button(self.window, text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
@@ -74,19 +75,20 @@ class App:
 
     def calculate_accuracy(self) -> None:
         clicks = self.missed_clicks + self.score
-        self.accuracy = (self.score/clicks) * 100
+        self.accuracy = round((self.score/clicks) * 100,2)
             
 
     def show_end_msg(self) -> None:
         self.calculate_accuracy()
         if self.score > self.high_score:
             self.high_score = self.score
+            self.high_score_accuracy = self.accuracy
             tkinter.messagebox.showinfo(title="NEW HIGHSCORE", \
                                                         message=f"Congratulation, you reached a new highscore!\
-                                                        \nYour highscore: {self.high_score} with an accuracy of {self.accuracy}%")
+                                                        \nYour highscore: {self.high_score} with an accuracy of {self.high_score_accuracy}%")
         else:
             tkinter.messagebox.showinfo(title="Game stats", message=f"Your score: {self.score} with an accuracy of {self.accuracy}%\
-                                         \nYour highscore: {self.high_score} with an accuracy of {self.accuracy}%")
+                                         \nYour highscore: {self.high_score} with an accuracy of {self.high_score_accuracy}%")
 
 
 class GameButton:
