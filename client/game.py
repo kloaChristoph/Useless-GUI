@@ -2,9 +2,12 @@ import tkinter
 import tkinter.messagebox
 import random
 import time
+from client_network import NetworkClient
 
 class App:
     def __init__(self, window: tkinter.Tk, window_title: str) -> None:
+        self.client = NetworkClient()
+
         self.window = window
         self.login_status = False
 
@@ -28,9 +31,36 @@ class App:
         self.time_label.place(x=300, y=400)
         self.exit_button.place(x=550, y=400)
 
-        self.window.mainloop()
+        self.start_loop()
+
+
+
+    def start_loop(self) -> None:
+        while True:
+            self.handle_server_commands()
+            
+            self.window.update()
+
+
+    def handle_server_commands(self) -> None:
+        """
+        Handle the commands received from the server
+
+        Returns
+        -------
+        None
+
+        """
+        if not self.client.que.empty():
+            recv: dict = self.client.que.get()
+
+            match recv.get("command"):
+                case "TODO":
+                    pass
+
 
     def login_window(self) -> None:
+        
         self.window.geometry("500x400")
 
         try:
@@ -71,8 +101,20 @@ class App:
         self.password_confirm_entry = tkinter.Entry(self.window, name="confirm_entry", font=('Arial 15'))
         self.password_confirm_entry.place(x=120, y=255)
 
-    def login(self):
-        self.login_status = True
+
+    def login(self) -> None:
+        """
+        Method triggerd by the login button -> Calls the setup_connection method and destroys the widgets that are no longer needed
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.setup_connection(register=False)
 
         self.login_button.destroy()
         self.register_button.destroy()
@@ -80,8 +122,22 @@ class App:
         self.username_label.destroy()
         self.password_entry.destroy()
         self.password_label.destroy()
+
 
     def register(self):
+        """
+        Method triggerd by the register button -> Calls the setup_connection method and destroys the widgets that are no longer needed
+        The user is loged in automatically
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.setup_connection(register=True)
 
         self.login_button.destroy()
         self.register_button.destroy()
@@ -89,12 +145,41 @@ class App:
         self.username_label.destroy()
         self.password_entry.destroy()
         self.password_label.destroy()
-
         self.password_confirm_entry.destroy()
         self.password_confirm_label.destroy()
 
-        self.login_window()
 
+    def setup_connection(self, register: bool) -> None:
+        """
+        Tries to connect to server and gives pop up if connection to server failed or the login wasn't correct
+
+        Parameters
+        ----------
+        register : bool
+            If register is True the user wants to register if not the user wants to log in into a existing account
+
+        Returns
+        -------
+        None
+        """
+        #stores the str the user typed into the username entry field
+        username = self.username_entry.get()
+
+        #checks if there is already a connection
+        if not self.client.connected:
+            #tries to connect to the server 
+            status = self.client.connect_to_server(username, self.password_entry.get(), register)
+
+            #if the connection is refused, a error pop up will show
+            if isinstance(status, ConnectionRefusedError):
+                tkinter.messagebox.showerror("CONNECTION FAILED", message="Couldn't connect to server!")
+    
+            #if the login credentials were wrong a error pop up will show
+            elif status == False:
+                tkinter.messagebox.showerror("LOGIN FAILED", message="Wrong username or password!")
+        
+            elif status == True:
+                self.login_status = True
 
 
 
