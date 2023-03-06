@@ -17,7 +17,7 @@ class App:
         self.missed_clicks = 0
         self.high_score = 0
         self.accuracy = 100
-        self.high_score_accuracy = 100
+        self.high_score_accuracy = 0
 
         self.show_buttons()
         self.start_button = tkinter.Button(self.window, text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
@@ -124,7 +124,11 @@ class App:
 
     def calculate_accuracy(self) -> None:
         clicks = self.missed_clicks + self.score
-        self.accuracy = round((self.score/clicks) * 100,2)
+        try:
+            self.accuracy = round((self.score/clicks) * 100,2)
+
+        except ZeroDivisionError:
+            self.accuracy = 0
             
 
     def show_end_msg(self) -> None:
