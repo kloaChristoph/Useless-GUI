@@ -115,13 +115,14 @@ class App:
         None
         """
         self.setup_connection(register=False)
-
-        self.login_button.destroy()
-        self.register_button.destroy()
-        self.username_entry.destroy()
-        self.username_label.destroy()
-        self.password_entry.destroy()
-        self.password_label.destroy()
+        
+        if self.login_status:
+            self.login_button.destroy()
+            self.register_button.destroy()
+            self.username_entry.destroy()
+            self.username_label.destroy()
+            self.password_entry.destroy()
+            self.password_label.destroy()
 
 
     def register(self):
@@ -139,14 +140,15 @@ class App:
         """
         self.setup_connection(register=True)
 
-        self.login_button.destroy()
-        self.register_button.destroy()
-        self.username_entry.destroy()
-        self.username_label.destroy()
-        self.password_entry.destroy()
-        self.password_label.destroy()
-        self.password_confirm_entry.destroy()
-        self.password_confirm_label.destroy()
+        if self.login_status:
+            self.login_button.destroy()
+            self.register_button.destroy()
+            self.username_entry.destroy()
+            self.username_label.destroy()
+            self.password_entry.destroy()
+            self.password_label.destroy()
+            self.password_confirm_entry.destroy()
+            self.password_confirm_label.destroy()
 
 
     def setup_connection(self, register: bool) -> None:
