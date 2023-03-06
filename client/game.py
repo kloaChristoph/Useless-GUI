@@ -8,6 +8,9 @@ class App:
         self.window = window
         self.login_status = False
 
+        self.exit_button = tkinter.Button(self.window, name="exit_button", text="Exit", command=self.exit_app, height=2, width=10)
+        self.exit_button.place(x=400, y=350)
+        
         self.login_window()
 
         self.window.title(window_title)
@@ -20,31 +23,38 @@ class App:
         self.high_score_accuracy = 0
 
         self.show_buttons()
-        self.start_button = tkinter.Button(self.window, text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
-        self.exit_button = tkinter.Button(self.window, text="Exit", command=self.exit_app, height=2, width=10).place(x=550, y=400)
-        self.time_label = tkinter.Label(self.window, text="Time: 5", height=2, width=10)
+        self.start_button = tkinter.Button(self.window, name="start_button", text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
+        self.time_label = tkinter.Label(self.window, name="start_label", text="Time: 5", height=2, width=10)
         self.time_label.place(x=300, y=400)
+        self.exit_button.place(x=550, y=400)
 
         self.window.mainloop()
 
     def login_window(self) -> None:
-        self.window.geometry("500x300")
-        self.login_button = tkinter.Button(self.window, text="login", command=self.login, height=2, width=10)
-        self.login_button.place(x=10, y=250)
+        self.window.geometry("500x400")
 
-        self.register_button = tkinter.Button(self.window, text="register", command=self.register, height=2, width=10)
-        self.register_button.place(x=400, y=250)
+        try:
+            self.password_confirm_entry.destroy()
+            self.password_confirm_label.destroy()
+        except AttributeError:
+            pass
 
-        self.user_name_label = tkinter.Label(self.window,text="Username:",height=3,width=10, font=('Arial 15'))
-        self.user_name_label.place(x=10, y=70)
+        self.login_button = tkinter.Button(self.window, name="login_button", text="login", command=self.login, height=2, width=10)
+        self.login_button.place(x=10, y=350)
 
-        self.user_name_entry = tkinter.Entry(self.window, font=('Arial 15'))
-        self.user_name_entry.place(x=120, y=95)
+        self.register_button = tkinter.Button(self.window, name="register_button", text="register", command=self.register_window, height=2, width=10)
+        self.register_button.place(x=200, y=350)
 
-        self.password_label = tkinter.Label(self.window,text="Password:",height=3,width=10, font=('Arial 15'))
+        self.username_label = tkinter.Label(self.window, name="username_label", text="Username:",height=3,width=10, font=('Arial 15'))
+        self.username_label.place(x=10, y=70)
+
+        self.username_entry = tkinter.Entry(self.window, name="username_entry", font=('Arial 15'))
+        self.username_entry.place(x=120, y=95)
+
+        self.password_label = tkinter.Label(self.window, name="password_label", text="Password:",height=3,width=10, font=('Arial 15'))
         self.password_label.place(x=10, y=150)
 
-        self.password_entry = tkinter.Entry(self.window, font=('Arial 15'))
+        self.password_entry = tkinter.Entry(self.window, name="password_entry", font=('Arial 15'))
         self.password_entry.place(x=120, y=175)
 
         while not self.login_status:
@@ -52,26 +62,45 @@ class App:
 
 
     def register_window(self) -> None:
-        pass
+        self.login_button.config(command=self.login_window)
+        self.register_button.config(command=self.register)
+
+        self.password_confirm_label = tkinter.Label(self.window, name="confirm_label", text="Confirm:", height=3, width=10, font=('Arial 15'))
+        self.password_confirm_label.place(x=10, y=230)
+
+        self.password_confirm_entry = tkinter.Entry(self.window, name="confirm_entry", font=('Arial 15'))
+        self.password_confirm_entry.place(x=120, y=255)
 
     def login(self):
         self.login_status = True
 
         self.login_button.destroy()
         self.register_button.destroy()
-        self.user_name_entry.destroy()
-        self.user_name_label.destroy()
+        self.username_entry.destroy()
+        self.username_label.destroy()
         self.password_entry.destroy()
         self.password_label.destroy()
 
     def register(self):
-        pass
+
+        self.login_button.destroy()
+        self.register_button.destroy()
+        self.username_entry.destroy()
+        self.username_label.destroy()
+        self.password_entry.destroy()
+        self.password_label.destroy()
+
+        self.password_confirm_entry.destroy()
+        self.password_confirm_label.destroy()
+
+        self.login_window()
+
 
 
 
     def exit_app(self) -> None:
         if tkinter.messagebox.askyesno(title="EXIT", message="Do you really want to exit the app?"):
-            self.window.quit()
+            self.window.destroy()
 
 
     def show_buttons(self) -> None:
