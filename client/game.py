@@ -188,6 +188,7 @@ class App:
     def exit_app(self) -> None:
         if tkinter.messagebox.askyesno(title="EXIT", message="Do you really want to exit the app?"):
             self.window.destroy()
+            self.client.server.close()
 
 
     def show_buttons(self) -> None:

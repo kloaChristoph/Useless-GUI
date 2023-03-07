@@ -66,13 +66,13 @@ class NetworkServer:
         self.db = db
         self.clients: dict[str, ClientData] = {}
         self.ENCODING = "utf-8"
-        self.conn: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.que: multiprocessing.Queue = multiprocessing.Queue()
         self.listeners: list[multiprocessing.Process] = []
 
         print(f"[{'LISTENING':<10}] Bound to the port: {host}:{port}")
-        self.conn.bind((host, port))
+        self.server_socket.bind((host, port))
 
 #-------------------------CONNECT-------------------------#
 
@@ -91,11 +91,11 @@ class NetworkServer:
         -------
         None
         """
-        self.conn.listen()
+        self.server_socket.listen()
 
         while len(self.clients) < amount:
             name = ""
-            conn, addr = self.conn.accept()
+            conn, addr = self.server_socket.accept()
 
             data = self.receive_from_client(conn=conn)
 
@@ -204,33 +204,34 @@ class NetworkServer:
         return data
 
 
-    def receive(self, name: str) -> str | None:
+    def receive(self, conn: socket.socket) -> str | None:
         """
         Receive data from a client
 
         Parameters
         ----------
-        name : The name of the client to receive the data from
-
+        conn : socket.socket
+            The connection to the client
+        
         Returns
         -------
-        str : The response
-        None : The name of the client is not given in self.clients
+        received : str | None
+            The data received
+            None if the name of the client is not given in self.clients
         """
-        if name not in self.clients:
-            return None
+        
+        received = self.recv(conn).decode(self.ENCODING)
+        return received
 
-        return self.recv(self.clients[name].conn).decode(self.ENCODING)
 
-
-    def receive_from_client(self, conn: socket) -> list[dict] | dict:
+    def receive_from_client(self, conn: socket.socket) -> list[dict] | dict:
         """
         Listen to ONE response of a client
-        (sometimes can be more command than one)
+        (sometimes can be more commands than one)
 
         Parameters
         ----------
-        client: str
+        client: socket.socket
             The client to receive the command(s) from
 
         Returns
@@ -320,3 +321,24 @@ class ClientData:
             conn,
             addr
         )
+    
+    def __eq__(self, other: object) -> bool:
+        """
+        Checks if a socket is the same as the socket of the Client
+
+        Parameters
+        ----------
+        other : CardBase | int
+            The other socket you want to compare with the stored socket
+
+        Returns
+        -------
+        bool : If it's te same socket
+        """
+
+        if isinstance(other, socket.socket):
+            if self.conn == other:
+                return True
+            else:
+                return False
+    
