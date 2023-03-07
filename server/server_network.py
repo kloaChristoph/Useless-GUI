@@ -76,7 +76,7 @@ class NetworkServer:
 
 #-------------------------CONNECT-------------------------#
 
-    def accept_clients(self, amount: int = 10) -> None:
+    def accept_clients(self) -> None:
         """
         Allow 'amount' clients to connect to the Server
 
@@ -84,8 +84,7 @@ class NetworkServer:
 
         Parameters
         ----------
-        amount : int
-            How many clients are able to connect
+        None
 
         Returns
         -------
@@ -111,7 +110,7 @@ class NetworkServer:
                 #checking if the user exists and if the password is correct
                 if self.db.verify_user(name, data.get("password")):
                     self.clients[name] = ClientData.new_conn(name, conn, addr)
-                    print(f"[{'CONNECTION':<10}] {name} connected to the Game {len(self.clients)}/{amount} ({addr[0]}:{addr[1]})")
+                    print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
 
                 else:
@@ -120,7 +119,13 @@ class NetworkServer:
 
 
             elif data.get("command") == "REGISTER":
-                pass
+                if self.db.register_user(name, data.get("password")):
+                    self.clients[name] = ClientData.new_conn(name, conn, addr)
+                    print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
+                    self.send_to("CONNECTED", name)
+                
+                else:
+                    self.send_to("CONNECTION_REFUSED", name, reason="Username not available!")
 
 #-------------------------CONNECT-------------------------#
 
