@@ -170,7 +170,7 @@ class App:
         #checks if there is already a connection
         if not self.client.connected:
             #tries to connect to the server 
-            status = self.client.connect_to_server(username, self.password_entry.get(), register)
+            status, reason = self.client.connect_to_server(username, self.password_entry.get(), register)
 
             #if the connection is refused, a error pop up will show
             if isinstance(status, ConnectionRefusedError):
@@ -178,7 +178,7 @@ class App:
     
             #if the login credentials were wrong a error pop up will show
             elif status == False:
-                tkinter.messagebox.showerror("LOGIN FAILED", message="Wrong username or password!")
+                tkinter.messagebox.showerror("LOGIN FAILED", message=f"{reason}")
         
             elif status == True:
                 self.login_status = True

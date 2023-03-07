@@ -93,29 +93,29 @@ class NetworkServer:
         """
         self.server_socket.listen()
 
-        while len(self.clients) < amount:
+        while True:
             name = ""
             conn, addr = self.server_socket.accept()
 
             data = self.receive_from_client(conn=conn)
 
-            if data.get("command") == "LOGIN":
-                
-                name = data.get("from")
+            name = data.get("from")
 
-                if name in self.clients:
-                    #there is already a client with that name
-                    self.send(conn, json.dumps({"command": "CONNECTION_REFUSED"}).encode(self.ENCODING))
-                    conn.close()
-                
+            if name in self.clients:
+                #there is already a client with that name
+                self.send_to("CONNECTION_REFUSED", name, conn, reason="Already loged in!")
+                conn.close()
+                continue
+
+            if data.get("command") == "LOGIN":
                 #checking if the user exists and if the password is correct
-                #TODO:
-                elif self.db.verify_user(name, data.get("password")):
+                if self.db.verify_user(name, data.get("password")):
                     self.clients[name] = ClientData.new_conn(name, conn, addr)
                     print(f"[{'CONNECTION':<10}] {name} connected to the Game {len(self.clients)}/{amount} ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
+
                 else:
-                    self.send(conn, json.dumps({"command": "CONNECTION_REFUSED"}).encode(self.ENCODING))
+                    self.send_to("CONNECTION_REFUSED", name, reason="Wrong username or password!")
                     conn.close()
 
 
@@ -147,7 +147,7 @@ class NetworkServer:
         conn.send(length.to_bytes(16, "big"))
         conn.send(data)
 
-    def send_to(self, command: str, username: str, **data: Any) -> None:
+    def send_to(self, command: str, username: str, conn: socket.socket=None, **data: Any) -> None:
         """
         Send data to a Client
 
@@ -163,8 +163,6 @@ class NetworkServer:
         -------
         None
         """
-        if username not in self.clients:
-            return None
         
         to_send = {"command": command,
                    "to": username}
@@ -176,7 +174,10 @@ class NetworkServer:
         string_data = json.dumps(to_send)
         print(f"[{'SENDING':<10}] {string_data}")
 
-        self.send(self.clients[username].conn, string_data.encode(self.ENCODING))
+        if conn:
+            self.send(conn, string_data.encode(self.ENCODING))
+        else:
+            self.send(self.clients[username].conn, string_data.encode(self.ENCODING))
 
 #--------------------------SEND---------------------------#
 

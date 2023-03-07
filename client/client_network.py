@@ -22,7 +22,7 @@ class NetworkClient:
 
 #-------------------------CONNECT-------------------------#
 
-    def connect_to_server(self, name: str, pwd: str, register: bool = False, host: str = "127.0.0.2", port: int = 3333) -> bool | ConnectionRefusedError:
+    def connect_to_server(self, name: str, pwd: str, register: bool = False, host: str = "127.0.0.2", port: int = 3333) -> bool | ConnectionRefusedError | None:
         """
         Connect to the server with a given name
 
@@ -60,12 +60,12 @@ class NetworkClient:
                 print("listener_started")
                 self.listener.start()
                 self.connected = True
-                return self.connected
+                return self.connected, None
         elif resp.get("command") == "CONNECTION_REFUSED":
             self.server.close()
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.connected = False
-            return self.connected
+            return self.connected, resp.get("reason")
 
 #-------------------------CONNECT-------------------------#
 
