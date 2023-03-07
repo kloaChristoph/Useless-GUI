@@ -13,6 +13,8 @@ class App:
 
         self.exit_button = tkinter.Button(self.window, name="exit_button", text="Exit", command=self.exit_app, height=2, width=10)
         self.exit_button.place(x=400, y=350)
+
+        self.info = tkinter.messagebox.showinfo("LOGIN INFO", message="the standard login is: \nadmin - admin")
         
         self.login_window()
 
