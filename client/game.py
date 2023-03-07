@@ -84,7 +84,7 @@ class App:
         self.password_label = tkinter.Label(self.window, name="password_label", text="Password:",height=3,width=10, font=('Arial 15'))
         self.password_label.place(x=10, y=150)
 
-        self.password_entry = tkinter.Entry(self.window, name="password_entry", font=('Arial 15'))
+        self.password_entry = tkinter.Entry(self.window, show="*", name="password_entry", font=('Arial 15'))
         self.password_entry.place(x=120, y=175)
 
         while not self.login_status:
@@ -98,7 +98,7 @@ class App:
         self.password_confirm_label = tkinter.Label(self.window, name="confirm_label", text="Confirm:", height=3, width=10, font=('Arial 15'))
         self.password_confirm_label.place(x=10, y=230)
 
-        self.password_confirm_entry = tkinter.Entry(self.window, name="confirm_entry", font=('Arial 15'))
+        self.password_confirm_entry = tkinter.Entry(self.window, show="*", name="confirm_entry", font=('Arial 15'))
         self.password_confirm_entry.place(x=120, y=255)
 
 
