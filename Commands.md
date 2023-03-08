@@ -33,3 +33,10 @@
 **Attributes:**
 - from: str → The Name of the Client the message comes from
 - password: str → The password the user typed into to login field
+
+### CLOSE_CONNECTION
+    The client registers a new account
+
+**Attributes:**
+- from: str → The Name of the Client the message comes from
+

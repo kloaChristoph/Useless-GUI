@@ -50,33 +50,30 @@ class NetworkServer:
     wait_for_response(client: str) -> None
         Wait for Responses from a client
     """
-    def __init__(self, db: database.Database , host: str = "127.0.0.2", port: int = 3333):
+    def __init__(self, host: str = "127.0.0.2", port: int = 3333):
         """
         Initialize a new NetworkServer to handle the network
 
         Parameters
         ----------
-        db: database.Databse
-            The Database in which the accounts are stored
         host : str
             The IP-Address the server will be bind to
         port : int
             The Port the server will be bind to
         """
-        self.db = db
         self.clients: dict[str, ClientData] = {}
         self.ENCODING = "utf-8"
         self.server_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.que: multiprocessing.Queue = multiprocessing.Queue()
-        self.listeners: list[multiprocessing.Process] = []
+        self.listeners: dict[str, multiprocessing.Process] = {}
 
         print(f"[{'LISTENING':<10}] Bound to the port: {host}:{port}")
         self.server_socket.bind((host, port))
 
 #-------------------------CONNECT-------------------------#
 
-    def accept_clients(self) -> None:
+    def accept_clients(self, db: database.Database) -> None:
         """
         Allow 'amount' clients to connect to the Server
 
@@ -84,13 +81,16 @@ class NetworkServer:
 
         Parameters
         ----------
-        None
+        db: database.Databse
+            The Database in which the accounts are stored
 
         Returns
         -------
         None
         """
         self.server_socket.listen()
+        self.command_handler = multiprocessing.Process(target=self.process_command, name="command_handler")
+        self.command_handler.start()
 
         while True:
             name = ""
@@ -108,22 +108,28 @@ class NetworkServer:
 
             if data.get("command") == "LOGIN":
                 #checking if the user exists and if the password is correct
-                if self.db.verify_user(name, data.get("password")):
+                if db.verify_user(name, data.get("password")):
                     self.clients[name] = ClientData.new_conn(name, conn, addr)
+
                     print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
 
+                    self.listeners[name] = multiprocessing.Process(target=self.recv_in_process, args=(conn,))
+                    self.listeners[name].start()
                 else:
-                    self.send_to("CONNECTION_REFUSED", name, reason="Wrong username or password!")
+                    self.send_to("CONNECTION_REFUSED", name, conn, reason="Wrong username or password!")
                     conn.close()
 
 
             elif data.get("command") == "REGISTER":
-                if self.db.register_user(name, data.get("password")):
+                if db.register_user(name, data.get("password")):
                     self.clients[name] = ClientData.new_conn(name, conn, addr)
+
                     print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
-                
+
+                    self.listeners[name] = multiprocessing.Process(target=self.recv_in_process, args=(conn,))
+                    self.listeners.get(name).start()
                 else:
                     self.send_to("CONNECTION_REFUSED", name, reason="Username not available!")
 
@@ -209,7 +215,6 @@ class NetworkServer:
         data = conn.recv(length)
         return data
 
-
     def receive(self, conn: socket.socket) -> str | None:
         """
         Receive data from a client
@@ -259,8 +264,55 @@ class NetworkServer:
                     # Add the {, } to the command again to make sure it is json loadable
                     commands.append(json.loads("{" + command + "}"))
             return commands
+        
+
+    def recv_in_process(self, conn: socket.socket) -> None:
+        """
+        Wait for message from a client
+        (used as a method in a process to receive multiple commands at once)
+
+        Parameters
+        ----------
+        conn: socket.socket
+            The connection to the client
+
+        Returns
+        -------
+        None
+        """
+        while True:
+            recv = self.receive_from_client(conn)
+            if recv:
+                if isinstance(recv, list):
+                    for com in recv:
+                        self.que.put(com)
+                    return
+                self.que.put(recv)
 
 #-------------------------RECEIVE-------------------------#
+
+    def process_command(self):
+        """
+        If there is a new command in the queue the server processes it
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        if not self.que.empty():
+            recv: dict = self.que.get()
+
+            match recv.get("command"):
+
+                case "CLOSE_CONNECTION":
+                    name = recv.get("from")
+                    self.listeners.pop(name)
+                    self.clients.pop(name)
+
 
 
 class ClientData:
@@ -341,7 +393,6 @@ class ClientData:
         -------
         bool : If it's te same socket
         """
-
         if isinstance(other, socket.socket):
             if self.conn == other:
                 return True
