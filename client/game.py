@@ -1,3 +1,8 @@
+"""
+In this file the class of the App and the GameButton is 
+~ Hartl Lorenz, Hell Andreas, Holas Christoph
+"""
+
 import tkinter
 import tkinter.messagebox
 from tkinter import ttk
