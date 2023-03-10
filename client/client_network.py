@@ -1,3 +1,8 @@
+"""
+In this file the Network part of the client is defined
+~ Hartl Lorenz, Hell Andreas, Holas Christoph
+"""
+
 import time
 import json
 import socket
@@ -7,15 +12,63 @@ from typing import Any
 
 
 class NetworkClient:
+    """
+    A class to handle the network part of the client
+
+    ...
+
+    Constants
+    ---------
+    ENCODING : str -> "utf-8"
+        The encoding when sending/receiving data
+
+    Attributes
+    ----------
+    que : multiprocessing.Queue
+        A queue to store the commands received when receiving data
+    client_socket : socket.socket
+        The socket to connect to the server
+    listener : multiprocessing.Process
+        The process to receive data from the server
+    running : bool
+        If the listener is running or not    
+    connected : bool
+        If the client is connected to the server or not
+
+    Methods
+    -------
+    connect_to_server(name: str, pwd: str, register: bool = False, host: str = "127.0.0.2", port: int = 3333) -> bool | ConnectionRefusedError | None
+        Connect to the server with a given name
+    send(data: bytes) -> None
+        Send data to the server (first length then data)
+    send_to_server(command: str, username: str, **data: Any) -> None
+        Send a command to the server
+    recv() -> bytes
+        Function to receive the exact amount of bytes
+        First the length will be received than the client receives the data
+    convert_received_data() -> dict | list[dict]
+        Receive data from the server and convert it to a command
+        (Multiple commands can be received at once)
+    recv_in_process() -> None
+        Function to receive data from the server and put it into the queue
+    """
+    
     def __init__(self):
         """
         Initialize a new NetworkClient
-        Setup needed attributes
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
         """
         self.ENCODING = "utf-8"
-        self.que = multiprocessing.Queue()
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listener = multiprocessing.Process(target=self.recv_in_process, daemon=True)
+        self.que: multiprocessing.Queue = multiprocessing.Queue()
+        self.client_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listener: multiprocessing.Process = multiprocessing.Process(target=self.recv_in_process, daemon=True)
         self.running: bool = True
         self.connected: bool = False
 
@@ -45,7 +98,7 @@ class NetworkClient:
             Returns if the connection was successful
         """
         try:
-            self.server.connect((host, port))
+            self.client_socket.connect((host, port))
         except ConnectionRefusedError as error:
             return error
     
@@ -62,8 +115,8 @@ class NetworkClient:
                 self.connected = True
                 return self.connected, None
         elif resp.get("command") == "CONNECTION_REFUSED":
-            self.server.close()
-            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.close()
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.connected = False
             return self.connected, resp.get("reason")
 
@@ -73,7 +126,7 @@ class NetworkClient:
 
 #--------------------------SEND---------------------------#
 
-    def send(self, data: bytes):
+    def send(self, data: bytes) -> None:
         """
         Send data to the server (first length then data)
 
@@ -88,8 +141,8 @@ class NetworkClient:
         """
         length = len(data)
         byte_length = length.to_bytes(16, "big")
-        self.server.send(byte_length)
-        self.server.send(data)
+        self.client_socket.send(byte_length)
+        self.client_socket.send(data)
 
 
     def send_to_server(self, command: str, username: str, **data: Any) -> None:
@@ -101,7 +154,7 @@ class NetworkClient:
         command : str
             The command name the server should receive
         username : str
-            The name of the client that send the command
+            The name of the client that sends the command
         data : dict
             Additional data the server needs to process the command
 
@@ -138,10 +191,11 @@ class NetworkClient:
         
         Returns
         -------
-        bytes : The data received
+        data : bytes
+            The data received
         """
-        length = int.from_bytes(self.server.recv(16), "big")
-        data = self.server.recv(length)
+        length = int.from_bytes(self.client_socket.recv(16), "big")
+        data = self.client_socket.recv(length)
         return data
 
 
@@ -156,8 +210,10 @@ class NetworkClient:
 
         Returns
         -------
-        dict : a command received from the server
-        list[dict] : a list of commands received from the server
+        : dict 
+            A command received from the server
+        commands : list[dict]
+            A list of commands received from the server
         """
         data = self.recv().decode()
         print(f"[{'RECEIVED':<10}] {data}")
@@ -177,7 +233,7 @@ class NetworkClient:
 
     def recv_in_process(self) -> None:
         """
-        The method the listener will listen to, to receive data from the server
+        The method the listener will call to receive data from the server
         When a command is received it will be added to the queue
 
         Parameters
@@ -196,6 +252,5 @@ class NetworkClient:
                         self.que.put(com)
                     return
                 self.que.put(recv)
-            time.sleep(0.2)
 
 #-------------------------RECEIVE-------------------------#
