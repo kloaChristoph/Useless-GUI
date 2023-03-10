@@ -440,12 +440,37 @@ class App:
 
 
 class GameButton:
+    """
+    A class to represent and interact with the game button
+
+    ...
+
+    Attributes
+    ----------
+    button : tkinter.Button
+        The button object of tkinter
+    highlighted : bool
+        The current status of the button
+    false_pressed : int
+        A counter for the wrong clicks in a game
+    right_pressed : int
+        A counter for the correct clicks in a game
+
+    Methods
+    -------
+    change_color() -> None
+        Changes the color of the button to read and the highlited status to True
+    def check_status() -> None
+        Checks if button is highlighted, updates the counters and resets the button if status was True
+    reset_button() -> None
+        Resets the button to the basic color and sets the highlighted status to Flase
+    """
     def __init__(self, window: tkinter.Tk, x: int, y: int, text: str) -> None:
-        self.button = tkinter.Button(window, text=text, command=self.check_status, height=5, width=10)
+        self.button: tkinter.Button = tkinter.Button(window, text=text, command=self.check_status, height=5, width=10)
         self.button.place(x=x, y=y)
-        self.highlighted = False
-        self.false_pressed = 0
-        self.right_pressed = 0
+        self.highlighted: bool = False
+        self.false_pressed: int = 0
+        self.right_pressed: int = 0
 
     def change_color(self) -> None:
         """
@@ -466,7 +491,7 @@ class GameButton:
         """
         Is triggert if the button is clicked
         Checks if button is highlighted
-            if its highlighted the counter of the correct presses increases by 1
+            if its highlighted the counter of the correct presses increases by 1 and resets button
             if its NOT highlighted the counter of the wrong presses increases by 1
 
         Parameters
