@@ -109,6 +109,20 @@ class App:
     """
 
     def __init__(self, window: tkinter.Tk, window_title: str) -> None:
+        """
+        Initialize a new App
+
+        Parameters
+        ----------
+        window : tkinter.TK
+            The window to show the app
+        window_title : str
+            The name of the Window
+
+        Returns
+        -------
+        None
+        """
         self.client = NetworkClient()
 
         self.window: tkinter.Tk = window
@@ -571,6 +585,24 @@ class GameButton:
         Resets the button to the basic color and sets the highlighted status to Flase
     """
     def __init__(self, window: tkinter.Tk, x: int, y: int, text: str) -> None:
+        """
+        Initialize a new GameButton
+
+        Parameters
+        ----------
+        window : tkinter.TK
+            The window in which the button should show up
+        x : int
+            The x-coordinate of the button
+        y : int
+            The y-coordinate of the button
+        text : str
+            The text that should be on the button
+            
+        Returns
+        -------
+        None
+        """
         self.button: tkinter.Button = tkinter.Button(window, text=text, command=self.check_status, height=5, width=10)
         self.button.place(x=x, y=y)
         self.highlighted: bool = False
