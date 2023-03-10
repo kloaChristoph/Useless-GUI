@@ -1,5 +1,6 @@
 import tkinter
 import tkinter.messagebox
+from tkinter import ttk
 import random
 import time
 from client_network import NetworkClient
@@ -22,9 +23,12 @@ class App:
         self.game_running = False
         self.score = 0
         self.missed_clicks = 0
-        self.high_score = 0
+        self.highscore = 0
         self.accuracy = 100
-        self.high_score_accuracy = 0
+        self.highscore_accuracy = 0
+
+        self.create_table()
+        self.client.send_to_server("REQUEST_HIGHSCORE_TABLE",self.username)
 
         self.show_buttons()
         self.start_button = tkinter.Button(self.window, name="start_button", text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
@@ -47,17 +51,20 @@ class App:
         """
         Handle the commands received from the server
 
+        Parameters
+        ----------
+        None
+
         Returns
         -------
         None
-
         """
         if not self.client.que.empty():
             recv: dict = self.client.que.get()
 
             match recv.get("command"):
-                case "TODO":
-                    pass
+                case "UPDATE_HIGHSCORE_TABLE":
+                    self.update_highscore_table(recv)
 
 
     def login_window(self) -> None:
@@ -185,6 +192,58 @@ class App:
                 self.login_status = True
 
 
+    def create_table(self)-> None:
+        """
+        Creats the highscore table
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        self.highscore_talbe = ttk.Treeview(self.window, column=("c1", "c2", "c3", "c4"), show='headings')
+
+        self.highscore_talbe.column("c1", anchor=tkinter.CENTER, width= 120)
+
+        self.highscore_talbe.heading("c1", text="Name")
+
+        self.highscore_talbe.column("c2", anchor=tkinter.CENTER, width=70)
+
+        self.highscore_talbe.heading("c2", text="Rating")
+
+        self.highscore_talbe.column("c3", anchor=tkinter.CENTER, width=70)
+
+        self.highscore_talbe.heading("c3", text="Score")
+
+        self.highscore_talbe.column("c4", anchor=tkinter.CENTER, width=90)
+
+        self.highscore_talbe.heading("c4", text="Accuracy [%]")
+        
+        self.highscore_talbe.place(x=330, y=50)
+
+
+    def update_highscore_table(self, data: dict) -> None:
+        """
+        Updates the highscore table
+
+        Parameters
+        ----------
+        data : dict
+            The data the client receives
+
+        Returns
+        -------
+        None
+        """
+        rows: list[list[str, int, int]] = data.get("highscores")
+
+        for row in rows:
+            self.highscore_talbe.insert("", tkinter.END, values=row)
+        
+
 
     def exit_app(self) -> None:
         if tkinter.messagebox.askyesno(title="EXIT", message="Do you really want to exit the app?"):
@@ -252,15 +311,15 @@ class App:
 
     def show_end_msg(self) -> None:
         self.calculate_accuracy()
-        if self.score > self.high_score:
-            self.high_score = self.score
-            self.high_score_accuracy = self.accuracy
+        if self.score > self.highscore:
+            self.highscore = self.score
+            self.highscore_accuracy = self.accuracy
             tkinter.messagebox.showinfo(title="NEW HIGHSCORE", \
                                                         message=f"Congratulation, you reached a new highscore!\
-                                                        \nYour highscore: {self.high_score} with an accuracy of {self.high_score_accuracy}%")
+                                                        \nYour highscore: {self.highscore} with an accuracy of {self.highscore_accuracy}%")
         else:
             tkinter.messagebox.showinfo(title="Game stats", message=f"Your score: {self.score} with an accuracy of {self.accuracy}%\
-                                         \nYour highscore: {self.high_score} with an accuracy of {self.high_score_accuracy}%")
+                                         \nYour highscore: {self.highscore} with an accuracy of {self.highscore_accuracy}%")
 
 
 

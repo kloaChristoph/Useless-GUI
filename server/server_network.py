@@ -136,6 +136,9 @@ class NetworkServer:
                 else:
                     self.send_to("CONNECTION_REFUSED", name, reason="Username not available!")
 
+            else:
+                continue
+
 #-------------------------CONNECT-------------------------#
 
 
@@ -287,17 +290,19 @@ class NetworkServer:
         -------
         None
         """
+        to_process = []
         while running:
             recv = self.receive_from_client(conn)
             if recv:
                 if isinstance(recv, list):
                     for com in recv:
-                        self.que.put(com)
-                    return
-                self.que.put(recv)
+                        to_process.append(recv)
+                        
+                else:
+                    to_process.append(recv)
 
-            while not self.que.empty():
-                recv: dict = self.que.get()
+            while to_process:
+                recv: dict = to_process[0]
 
                 match recv.get("command"):
 
@@ -307,7 +312,28 @@ class NetworkServer:
                         self.clients.pop(name)
                         self.remove_client_queue.put(name)
                         break
+                    
+                    case "NEW_HIGHSCORE":
+                        name: str = recv.get("from")
+                        score: int = recv.get("highscore")
+                        accuracy: float = recv.get("accuracy")
+                        time: int = recv.get("time")
+                        process_db = database.Database()
+                        process_db.updat_highscore(name, score, accuracy, time)
 
+                        highscores = process_db.get_highscores()
+
+                        process_db.close_conn()
+                        self.send_to("UPDATE_HIGHSCORE_TABLE", name, highscores = highscores)
+
+                    case "REQUEST_HIGHSCORE_TABLE":
+                        process_db = database.Database()
+                        highscores = process_db.get_highscores()
+                        process_db.close_conn()
+                        
+                        self.send_to("UPDATE_HIGHSCORE_TABLE", name, highscores = highscores)
+
+                to_process.pop(0)  
 #-------------------------RECEIVE-------------------------#
 
 
