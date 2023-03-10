@@ -66,7 +66,7 @@ class NetworkServer:
         self.server_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.que: multiprocessing.Queue = multiprocessing.Queue()
-        self.listeners: dict[str, multiprocessing.Process] = {}
+        self.remove_client_queue: multiprocessing.Queue = multiprocessing.Queue()
 
         print(f"[{'LISTENING':<10}] Bound to the port: {host}:{port}")
         self.server_socket.bind((host, port))
@@ -89,8 +89,6 @@ class NetworkServer:
         None
         """
         self.server_socket.listen()
-        self.command_handler = multiprocessing.Process(target=self.process_command, name="command_handler")
-        self.command_handler.start()
 
         while True:
             name = ""
@@ -99,6 +97,10 @@ class NetworkServer:
             data = self.receive_from_client(conn=conn)
 
             name = data.get("from")
+
+            while not self.remove_client_queue.empty():
+                name: str = self.remove_client_queue.get()
+                self.clients.pop(name)
 
             if name in self.clients:
                 #there is already a client with that name
@@ -114,8 +116,9 @@ class NetworkServer:
                     print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
 
-                    self.listeners[name] = multiprocessing.Process(target=self.recv_in_process, args=(conn,))
-                    self.listeners[name].start()
+                    listener = multiprocessing.Process(target=self.recv_in_process, args=(conn, name, True))
+                    listener.start()
+
                 else:
                     self.send_to("CONNECTION_REFUSED", name, conn, reason="Wrong username or password!")
                     conn.close()
@@ -128,8 +131,8 @@ class NetworkServer:
                     print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
 
-                    self.listeners[name] = multiprocessing.Process(target=self.recv_in_process, args=(conn,))
-                    self.listeners.get(name).start()
+                    listener = multiprocessing.Process(target=self.recv_in_process, args=(conn, name, True))
+                    listener.start()
                 else:
                     self.send_to("CONNECTION_REFUSED", name, reason="Username not available!")
 
@@ -266,7 +269,7 @@ class NetworkServer:
             return commands
         
 
-    def recv_in_process(self, conn: socket.socket) -> None:
+    def recv_in_process(self, conn: socket.socket, name: str, running: bool) -> None:
         """
         Wait for message from a client
         (used as a method in a process to receive multiple commands at once)
@@ -275,12 +278,16 @@ class NetworkServer:
         ----------
         conn: socket.socket
             The connection to the client
+        name: str
+            The name of the client
+        running: bool
+            Stops the process if running is False
 
         Returns
         -------
         None
         """
-        while True:
+        while running:
             recv = self.receive_from_client(conn)
             if recv:
                 if isinstance(recv, list):
@@ -289,29 +296,19 @@ class NetworkServer:
                     return
                 self.que.put(recv)
 
+            while not self.que.empty():
+                recv: dict = self.que.get()
+
+                match recv.get("command"):
+
+                    case "CLOSE_CONNECTION":
+                        name = recv.get("from")
+                        running = False
+                        self.clients.pop(name)
+                        self.remove_client_queue.put(name)
+                        break
+
 #-------------------------RECEIVE-------------------------#
-
-    def process_command(self):
-        """
-        If there is a new command in the queue the server processes it
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
-        if not self.que.empty():
-            recv: dict = self.que.get()
-
-            match recv.get("command"):
-
-                case "CLOSE_CONNECTION":
-                    name = recv.get("from")
-                    self.listeners.pop(name)
-                    self.clients.pop(name)
 
 
 

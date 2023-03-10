@@ -10,6 +10,7 @@ class App:
 
         self.window = window
         self.login_status = False
+        self.username: str = ""
 
         self.exit_button = tkinter.Button(self.window, name="exit_button", text="Exit", command=self.exit_app, height=2, width=10)
         self.exit_button.place(x=400, y=350)
@@ -165,12 +166,12 @@ class App:
         None
         """
         #stores the str the user typed into the username entry field
-        username = self.username_entry.get()
+        self.username = self.username_entry.get()
 
         #checks if there is already a connection
         if not self.client.connected:
             #tries to connect to the server 
-            status, reason = self.client.connect_to_server(username, self.password_entry.get(), register)
+            status, reason = self.client.connect_to_server(self.username, self.password_entry.get(), register)
 
             #if the connection is refused, a error pop up will show
             if isinstance(status, ConnectionRefusedError):
@@ -187,6 +188,7 @@ class App:
 
     def exit_app(self) -> None:
         if tkinter.messagebox.askyesno(title="EXIT", message="Do you really want to exit the app?"):
+            self.client.send_to_server("CLOSE_CONNECTION", self.username)
             self.window.destroy()
             self.client.server.close()
 
