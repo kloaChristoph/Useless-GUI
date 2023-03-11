@@ -350,6 +350,16 @@ class App:
         """
         #stores the str the user typed into the username entry field
         self.username = self.username_entry.get()
+        if not self.username:
+            tkinter.messagebox.showerror("NO USERNAME", message="Please enter a username!")
+            return
+        if not self.password_entry.get() and register:
+            tkinter.messagebox.showerror("NO PASSWORD", message="Please enter a password!")
+            return
+        if self.password_confirm_entry.get() != self.password_entry.get() and register:
+            tkinter.messagebox.showerror("PASSWORDS DON'T MATCH", message="Please enter the same password!")
+            return
+
 
         #checks if there is already a connection
         if not self.client.connected:
