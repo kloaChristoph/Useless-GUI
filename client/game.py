@@ -142,6 +142,7 @@ class App:
         self.window.title(window_title)
         self.window.geometry("700x500")
         self.game_running: bool = False
+        self.duration: int = 10
         self.score: int = 0
         self.missed_clicks: int = 0
         self.accuracy: float = 100
@@ -153,7 +154,7 @@ class App:
 
         self.show_buttons()
         self.start_button = tkinter.Button(self.window, name="start_button", text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
-        self.time_label = tkinter.Label(self.window, name="start_label", text="Time: 5", height=2, width=10)
+        self.time_label = tkinter.Label(self.window, name="start_label", text=f"Time: {self.duration}", height=2, width=10)
         self.time_label.place(x=300, y=400)
         self.exit_button.place(x=550, y=400)
 
@@ -368,7 +369,7 @@ class App:
         -------
         None
         """
-        duration = 5
+
         #Checking if there is already a game and starts one if there is not
         if not self.game_running:
             self.reset_stats()
@@ -376,13 +377,13 @@ class App:
             self.game_running = True
 
             #Runs the game as long as the timer is runnning
-            while start_time + duration >= time.time():
+            while start_time + self.duration >= time.time():
                 random_button: GameButton = random.choice(self.buttons)
                 random_button.change_color()
 
                 #Updates the screen and waits until the right button is pressed
-                while random_button.highlighted == True and start_time + duration >= time.time():
-                    time_left = str(int(duration-(time.time()-start_time)))
+                while random_button.highlighted == True and start_time + self.duration >= time.time():
+                    time_left = str(int(self.duration-(time.time()-start_time)))
                     self.time_label.config(text=f"Time: {time_left}")
                     self.window.update()
                 
@@ -408,6 +409,10 @@ class App:
         if self.score > self.highscore:
             self.highscore = self.score
             self.highscore_accuracy = self.accuracy
+
+            self.client.send_to_server("NEW_HIGHSCORE", self.username, highscore = self.highscore, \
+                                        accuracy = self.highscore_accuracy, time = self.duration)
+
             tkinter.messagebox.showinfo(title="NEW HIGHSCORE", \
                                                         message=f"Congratulation, you reached a new highscore!\
                                                         \nYour highscore: {self.highscore} with an accuracy of {self.highscore_accuracy}%")
@@ -460,8 +465,11 @@ class App:
         -------
         None
         """
-        rows: list[list[str, int, int]] = data.get("highscores")
-        #TODO: removing old entries in table
+        entries = self.highscore_talbe.get_children()
+        for item in entries:
+            self.highscore_talbe.delete(item)
+        
+        rows: list[list[str, int, int]] = data.get("highscores") 
         for row in rows:
             self.highscore_talbe.insert("", tkinter.END, values=row)
         
