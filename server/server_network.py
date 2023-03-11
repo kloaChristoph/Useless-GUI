@@ -20,37 +20,33 @@ class NetworkServer:
     ----------
     clients : dict[str, ClientData] (default: {})
         A dictionary of every Client
-    conn : socket.socket
+    server_socket : socket.socket
         A TCP/IPv4 connection to allow clients to connect to the server
-    que : multiprocessing.Queue
-        A que to receive multiple commands at once
-    listeners : list[multiprocessing.Process] (default: [])
-        A list of processes to receive data simultaneously
+    remove_client_queue : multiprocessing.Queue
+        A que to remove clients from the clients dictionary
 
     Methods
     -------
+    accept_clients(db: database.Database) -> None
+        Allow clients to connect to the Server
     send(conn: socket.socket, data: bytes) -> None
         Send data to the client (first length then data)
+    send_to(command: str, username: str, conn: socket.socket=None, **data: Any) -> None
+        Send a command to a client
     recv(conn: socket.socket) -> bytes
         Function to receive the exact amount of bytes
-    accept_clients(amount: int = 4) -> None
-        Allow 'amount' clients to connect to the Server
-    send_all(command: str, **data) -> None
-        Send a command to every client in self.clients
-    send_to(command: str, username: str, **data) -> None
-        Send data to a Client
-    receive(name: str) -> str | None
-        Receive data from a client
-    receive_from_client(client) -> list[dict] | dict
-        Listen to ONE response of a client
-    allow_responses_from(*clients: str) -> None
-        Start processes for every given client and listen if they are sending commands
-    stop_responses() -> None
-        Close all running listeners
-    wait_for_response(client: str) -> None
-        Wait for Responses from a client
+        First the length will be received than the data
+    receive(conn: socket.socket) -> str | None
+        Receive data from the client
+    receive_from_client(conn: socket.socket) -> list[dict] | dict
+        Convert the received data to a command or list of commands
+    recv_in_process(conn: socket.socket, running: bool) -> None
+        Receive data from a client in a process
+    process_commands(to_process: list) -> None
+        Process the commands 
     """
-    def __init__(self, host: str = "127.0.0.2", port: int = 3333):
+
+    def __init__(self, host: str = "127.0.0.2", port: int = 3333) -> None:
         """
         Initialize a new NetworkServer to handle the network
 
@@ -60,24 +56,25 @@ class NetworkServer:
             The IP-Address the server will be bind to
         port : int
             The Port the server will be bind to
+        
+        Returns
+        -------
+        None
         """
         self.clients: dict[str, ClientData] = {}
         self.ENCODING = "utf-8"
         self.server_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        self.que: multiprocessing.Queue = multiprocessing.Queue()
         self.remove_client_queue: multiprocessing.Queue = multiprocessing.Queue()
 
         print(f"[{'LISTENING':<10}] Bound to the port: {host}:{port}")
         self.server_socket.bind((host, port))
 
+
 #-------------------------CONNECT-------------------------#
 
     def accept_clients(self, db: database.Database) -> None:
         """
-        Allow 'amount' clients to connect to the Server
-
-        Receive the name and store them as a ClientData
+        Allow clients to connect to the Server
 
         Parameters
         ----------
@@ -116,13 +113,12 @@ class NetworkServer:
                     print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
 
-                    listener = multiprocessing.Process(target=self.recv_in_process, args=(conn, name, True))
+                    listener = multiprocessing.Process(target=self.recv_in_process, args=(conn, True))
                     listener.start()
 
                 else:
                     self.send_to("CONNECTION_REFUSED", name, conn, reason="Wrong username or password!")
                     conn.close()
-
 
             elif data.get("command") == "REGISTER":
                 if db.register_user(name, data.get("password")):
@@ -131,7 +127,7 @@ class NetworkServer:
                     print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
 
-                    listener = multiprocessing.Process(target=self.recv_in_process, args=(conn, name, True))
+                    listener = multiprocessing.Process(target=self.recv_in_process, args=(conn, True))
                     listener.start()
                 else:
                     self.send_to("CONNECTION_REFUSED", name, reason="Username not available!")
@@ -164,9 +160,10 @@ class NetworkServer:
         conn.send(length.to_bytes(16, "big"))
         conn.send(data)
 
+
     def send_to(self, command: str, username: str, conn: socket.socket=None, **data: Any) -> None:
         """
-        Send data to a Client
+        Send a command to a client
 
         Parameters
         ----------
@@ -174,8 +171,11 @@ class NetworkServer:
             The command the Client should receive
         username : str
             The username the command should be sent to
+        conn : socket.socket
+            Uses this connection to send data if given
         data : any
             Additional data the client needs
+        
         Returns
         -------
         None
@@ -214,12 +214,14 @@ class NetworkServer:
 
         Returns
         -------
-        bytes : The data received
+        data : bytes
+            The data received
         """
         byte_length = conn.recv(16)
         length = int.from_bytes(byte_length, "big")
         data = conn.recv(length)
         return data
+
 
     def receive(self, conn: socket.socket) -> str | None:
         """
@@ -234,7 +236,7 @@ class NetworkServer:
         -------
         received : str | None
             The data received
-            None if the name of the client is not given in self.clients
+            None if couldnt receive data
         """
         
         received = self.recv(conn).decode(self.ENCODING)
@@ -243,18 +245,19 @@ class NetworkServer:
 
     def receive_from_client(self, conn: socket.socket) -> list[dict] | dict:
         """
-        Listen to ONE response of a client
-        (sometimes can be more commands than one)
+        Convert the received data to a command or list of commands
 
         Parameters
         ----------
-        client: socket.socket
+        conn: socket.socket
             The client to receive the command(s) from
 
         Returns
         -------
-        dict : One Command
-        list[dict] : Multiple Commands
+        : dict
+            One Command
+        commands : list[dict]
+            Multiple Commands
         """
         data = self.receive(conn)
         print(f"[{'RECEIVED':<10}] {data}")
@@ -272,10 +275,9 @@ class NetworkServer:
             return commands
         
 
-    def recv_in_process(self, conn: socket.socket, name: str, running: bool) -> None:
+    def recv_in_process(self, conn: socket.socket, running: bool) -> None:
         """
-        Wait for message from a client
-        (used as a method in a process to receive multiple commands at once)
+        Receive data from a client in a process
 
         Parameters
         ----------
@@ -300,40 +302,59 @@ class NetworkServer:
                         
                 else:
                     to_process.append(recv)
+        
+            to_process = self.process_commands(to_process)
 
-            while to_process:
-                recv: dict = to_process[0]
 
-                match recv.get("command"):
+    def process_commands(self, to_process: list) -> list:
+        """
+        Process the commands
 
-                    case "CLOSE_CONNECTION":
-                        name = recv.get("from")
-                        running = False
-                        self.clients.pop(name)
-                        self.remove_client_queue.put(name)
-                        break
+        Parameters
+        ----------
+        to_process : list
+            The commands to process
+
+        Returns
+        -------
+        to_process : list
+            The commands that couldnt be processed or a empty list if all commands were processed
+        """
+        while to_process:
+            recv: dict = to_process[0]
+
+            match recv.get("command"):
+
+                case "CLOSE_CONNECTION":
+                    name = recv.get("from")
+                    running = False
+                    self.clients.pop(name)
+                    self.remove_client_queue.put(name)
+                    break
+                
+                case "NEW_HIGHSCORE":
+                    name: str = recv.get("from")
+                    score: int = recv.get("highscore")
+                    accuracy: float = recv.get("accuracy")
+                    time: int = recv.get("time")
+                    process_db = database.Database()
+                    process_db.updat_highscore(name, score, accuracy, time)
+
+                    highscores = process_db.get_highscores()
+
+                    process_db.close_conn()
+                    self.send_to("UPDATE_HIGHSCORE_TABLE", name, highscores = highscores)
+
+                case "REQUEST_HIGHSCORE_TABLE":
+                    process_db = database.Database()
+                    highscores = process_db.get_highscores()
+                    process_db.close_conn()
                     
-                    case "NEW_HIGHSCORE":
-                        name: str = recv.get("from")
-                        score: int = recv.get("highscore")
-                        accuracy: float = recv.get("accuracy")
-                        time: int = recv.get("time")
-                        process_db = database.Database()
-                        process_db.updat_highscore(name, score, accuracy, time)
+                    self.send_to("UPDATE_HIGHSCORE_TABLE", name, highscores = highscores)
 
-                        highscores = process_db.get_highscores()
+            to_process.pop(0)   
+        return to_process
 
-                        process_db.close_conn()
-                        self.send_to("UPDATE_HIGHSCORE_TABLE", name, highscores = highscores)
-
-                    case "REQUEST_HIGHSCORE_TABLE":
-                        process_db = database.Database()
-                        highscores = process_db.get_highscores()
-                        process_db.close_conn()
-                        
-                        self.send_to("UPDATE_HIGHSCORE_TABLE", name, highscores = highscores)
-
-                to_process.pop(0)  
 #-------------------------RECEIVE-------------------------#
 
 
