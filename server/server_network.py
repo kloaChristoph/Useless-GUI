@@ -103,6 +103,7 @@ class NetworkServer:
             name = data.get("from")
 
             while not self.remove_client_queue.empty():
+                #if client disconnected the name of the client will be in the queue
                 name: str = self.remove_client_queue.get()
                 self.clients.pop(name)
 
@@ -120,24 +121,31 @@ class NetworkServer:
                     print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
 
+                    #starting a new process to receive data from the client
                     listener = multiprocessing.Process(target=self.recv_in_process, args=(conn, True))
                     listener.start()
 
                 else:
+                    #The login credentials were wrong
                     self.send_to("CONNECTION_REFUSED", name, conn, reason="Wrong username or password!")
                     conn.close()
 
             elif data.get("command") == "REGISTER":
+                #tries to register new user 
                 if db.register_user(name, data.get("password")):
                     self.clients[name] = ClientData.new_conn(name, conn, addr)
 
                     print(f"[{'CONNECTION':<10}] {name} connected to the server ({addr[0]}:{addr[1]})")
                     self.send_to("CONNECTED", name)
 
+                    #starting a new process to receive data from the client
                     listener = multiprocessing.Process(target=self.recv_in_process, args=(conn, True))
                     listener.start()
+
                 else:
+                    #The username is already taken
                     self.send_to("CONNECTION_REFUSED", name, conn, reason="Username not available!")
+                    conn.close()
 
             else:
                 continue
@@ -187,17 +195,20 @@ class NetworkServer:
         -------
         None
         """
-        
+        #creating the standard dict that will be send to the client
         to_send = {"command": command,
                    "to": username}
 
         if data:
+            #add kwargs to the dict
             for key, value in data.items():
                 to_send[key] = value
 
+        #convert the dict to a json string
         string_data = json.dumps(to_send)
         print(f"[{'SENDING':<10}] {string_data}")
 
+        #if a conn is given send id to this conn else send it to the client with the username
         if conn:
             self.send(conn, string_data.encode(self.ENCODING))
         else:
@@ -292,7 +303,7 @@ class NetworkServer:
         except json.decoder.JSONDecodeError:
             commands = []
             commands_len = data.count("command")
-            # Remove first and last {,} to be sure to add the {,} afterwards in the for loop
+            #removing the first and last {,} to split the commands
             partial_commands = data[1:-1].split("}{")
             if len(partial_commands) == commands_len:
                 for command in partial_commands:
@@ -324,7 +335,7 @@ class NetworkServer:
             if recv:
                 if isinstance(recv, list):
                     for com in recv:
-                        to_process.append(recv)
+                        to_process.append(com)
                         
                 else:
                     to_process.append(recv)
