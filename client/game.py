@@ -357,7 +357,7 @@ class App:
             if not self.password_entry.get():
                 tkinter.messagebox.showerror("NO PASSWORD", message="Please enter a password!")
                 return
-            if self.password_confirm_entry.get() != self.password_entry.get:
+            if self.password_confirm_entry.get() != self.password_entry.get():
                 tkinter.messagebox.showerror("PASSWORDS DON'T MATCH", message="Please enter the same password!")
                 return
 
