@@ -3,7 +3,6 @@ In this file the Network part of the client is defined
 ~ Hartl Lorenz, Hell Andreas, Holas Christoph
 """
 
-import time
 import json
 import socket
 import multiprocessing
