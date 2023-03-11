@@ -628,7 +628,10 @@ class App:
             self.client.send_to_server("CLOSE_CONNECTION", self.username)
             self.app_running = False
             self.window.destroy()
-            self.client.listener.terminate()
+            try:
+                self.client.listener.terminate()
+            except AttributeError:
+                pass
             self.client.client_socket.close()
 #------------------------OTHER--------------------------#
 
