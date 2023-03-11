@@ -29,6 +29,8 @@ class App:
         A variable to check the if user is loged in 
     game_running : bool
         A variable to check if there is a game running
+    app_running : bool
+        A variable to check if the app is running
 
     score: int
         The score of the last game
@@ -134,6 +136,7 @@ class App:
 
         self.window: tkinter.Tk = window
         self.login_status: bool = False
+        self.app_running: bool = True
         self.username: str = ""
 
         self.exit_button = tkinter.Button(self.window, name="exit_button", text="Exit", command=self.exit_app, height=2, width=10)
@@ -181,7 +184,7 @@ class App:
         None
         """
         last_highscore_request = time.time()
-        while True:
+        while self.app_running:
             if last_highscore_request + 30 <= time.time():
                 self.client.send_to_server("REQUEST_HIGHSCORE_TABLE",self.username)
                 last_highscore_request = time.time()
@@ -600,6 +603,7 @@ class App:
         """
         if tkinter.messagebox.askyesno(title="EXIT", message="Do you really want to exit the app?"):
             self.client.send_to_server("CLOSE_CONNECTION", self.username)
+            self.app_running = False
             self.window.destroy()
             self.client.listener.terminate()
             self.client.client_socket.close()
