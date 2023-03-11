@@ -353,12 +353,13 @@ class App:
         if not self.username:
             tkinter.messagebox.showerror("NO USERNAME", message="Please enter a username!")
             return
-        if not self.password_entry.get() and register:
-            tkinter.messagebox.showerror("NO PASSWORD", message="Please enter a password!")
-            return
-        if self.password_confirm_entry.get() != self.password_entry.get() and register:
-            tkinter.messagebox.showerror("PASSWORDS DON'T MATCH", message="Please enter the same password!")
-            return
+        if register:
+            if not self.password_entry.get():
+                tkinter.messagebox.showerror("NO PASSWORD", message="Please enter a password!")
+                return
+            if self.password_confirm_entry.get() != self.password_entry.get:
+                tkinter.messagebox.showerror("PASSWORDS DON'T MATCH", message="Please enter the same password!")
+                return
 
 
         #checks if there is already a connection
