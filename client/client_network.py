@@ -139,9 +139,12 @@ class NetworkClient:
         None
         """
         length = len(data)
-        byte_length = length.to_bytes(16, "big")
-        self.client_socket.send(byte_length)
-        self.client_socket.send(data)
+        try:
+            byte_length = length.to_bytes(16, "big")
+            self.client_socket.send(byte_length)
+            self.client_socket.send(data)
+        except OSError:
+            pass
 
 
     def send_to_server(self, command: str, username: str, **data: Any) -> None:
