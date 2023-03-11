@@ -75,6 +75,8 @@ class App:
         The table to show the highscores of the top 10 users
     buttons : list[GameButton]
         A list of the game buttons (each calls GameButton.check_status)
+    highscore_table_label : tkinter.Label
+        A heading for the highscore table
     
     Methods
     -------
@@ -487,6 +489,8 @@ class App:
         -------
         None
         """
+        self.highscore_table_label = tkinter.Label(self.window, name="table_label", text="Top 10 highscores", font=('Arial 22'))
+        self.highscore_table_label.place(x=400,y=40)
         self.highscore_talbe = ttk.Treeview(self.window, column=("c1", "c2", "c3", "c4"), show='headings')
 
         self.highscore_talbe.column("c1", anchor=tkinter.CENTER, width= 120)
@@ -501,7 +505,7 @@ class App:
         self.highscore_talbe.column("c4", anchor=tkinter.CENTER, width=90)
         self.highscore_talbe.heading("c4", text="Accuracy [%]")
         
-        self.highscore_talbe.place(x=330, y=50)
+        self.highscore_talbe.place(x=330, y=85)
 
 
     def update_highscore_table(self, data: dict) -> None:
