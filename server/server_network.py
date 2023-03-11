@@ -424,22 +424,3 @@ class ClientData:
             addr
         )
     
-    def __eq__(self, other: object) -> bool:
-        """
-        Checks if a socket is the same as the socket of the Client
-
-        Parameters
-        ----------
-        other : CardBase | int
-            The other socket you want to compare with the stored socket
-
-        Returns
-        -------
-        bool : If it's te same socket
-        """
-        if isinstance(other, socket.socket):
-            if self.conn == other:
-                return True
-            else:
-                return False
-    
