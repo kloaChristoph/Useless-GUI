@@ -201,7 +201,7 @@ class NetworkClient:
             data = self.client_socket.recv(length)
             return data
         except ConnectionResetError:
-            b"{'command': 'CONNECTION_LOST'}"
+            return b"{'command': 'CONNECTION_LOST'}"
 
 
     def convert_received_data(self) -> dict | list[dict]:
