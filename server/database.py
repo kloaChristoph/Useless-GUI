@@ -141,7 +141,7 @@ class Database:
         self.conn.commit()
  
 
-    def get_highscores(self) -> list[list[float, str, int, float, int]]:
+    def get_highscores(self) -> list[list[str, float, int, float, int]]:
         """
         Gets the highscores of all players and returns the top 10
 
@@ -166,6 +166,31 @@ class Database:
             sorted_highscores = sorted(highscores, key= lambda client: client[1], reverse=True)
             return sorted_highscores[0:10]
 
+    
+    def get_user_highscore(self, username: str) -> list[float, int, float, int]:
+        """
+        Gets the highscore of the user
+
+        Parameters
+        ----------
+        username : str
+            The name of the user who requests his highscore
+
+        Returns
+        -------
+        highscore : list[float, int, float, int]
+            The highscore of the user
+        """
+        self.cursor.execute("SElECT highscore, accuracy, time from accounts where username = ?", (username,))
+        db_entry = self.cursor.fetchone()
+        if db_entry:
+            score, accuracy, time = db_entry
+            avg_score_per_sec = round((score*accuracy)/(100*time), 3)
+            highscore = [avg_score_per_sec, score, accuracy, time]
+            return highscore
+        else:
+            return None
+
 
     def close_conn(self) -> None:
         """
@@ -187,7 +212,8 @@ if __name__ == "__main__":
     db = Database()
     
     #db.register_user("admin", "admin")
-    #db.updat_highscore("admin", 9, 100, 5)
-    #db.updat_highscore("christoph", 13, 90.3, 5)
+    db.updat_highscore("admin", 13, 94.2, 10)
+    db.updat_highscore("christoph", 16, 83.8, 10)
 
     #db.get_highscores()
+    #db.get_user_highscore("admin")

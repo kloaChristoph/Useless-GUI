@@ -49,6 +49,8 @@ class NetworkServer:
         Receive data from a client in a process
     process_commands(to_process: list) -> None
         Process the commands 
+    send_to_all(command: str, **data: Any) -> None
+        Send a command to all clients
     """
 
     def __init__(self, host: str = "127.0.0.2", port: int = 3333) -> None:
@@ -201,6 +203,25 @@ class NetworkServer:
         else:
             self.send(self.clients[username].conn, string_data.encode(self.ENCODING))
 
+
+    def send_to_all(self, command: str, **data: Any) -> None:
+        """
+        Send a command to all clients
+
+        Parameters
+        ----------
+        command : str
+            The command the Client should receive
+        data : any
+            Additional data the client needs
+        
+        Returns
+        -------
+        None
+        """
+        for client in self.clients.values():
+            self.send_to(command, client.name, **data)
+
 #--------------------------SEND---------------------------#
 
 
@@ -308,10 +329,10 @@ class NetworkServer:
                 else:
                     to_process.append(recv)
         
-            to_process = self.process_commands(to_process)
+            to_process, running = self.process_commands(to_process)
 
 
-    def process_commands(self, to_process: list) -> list:
+    def process_commands(self, to_process: list) -> list | bool:
         """
         Process the commands
 
@@ -324,21 +345,24 @@ class NetworkServer:
         -------
         to_process : list
             The commands that couldnt be processed or a empty list if all commands were processed
+        running : bool
+            Gives the process the information if it should stop
         """
+        running = True
+
         while to_process:
             recv: dict = to_process[0]
+            name = recv.get("from")
 
             match recv.get("command"):
 
                 case "CLOSE_CONNECTION":
-                    name = recv.get("from")
                     running = False
                     self.clients.pop(name)
                     self.remove_client_queue.put(name)
                     break
                 
                 case "NEW_HIGHSCORE":
-                    name: str = recv.get("from")
                     score: int = recv.get("highscore")
                     accuracy: float = recv.get("accuracy")
                     time: int = recv.get("time")
@@ -348,7 +372,7 @@ class NetworkServer:
                     highscores = process_db.get_highscores()
 
                     process_db.close_conn()
-                    self.send_to("UPDATE_HIGHSCORE_TABLE", name, highscores = highscores)
+                    self.send_to_all("UPDATE_HIGHSCORE_TABLE", highscores = highscores)
 
                 case "REQUEST_HIGHSCORE_TABLE":
                     process_db = database.Database()
@@ -357,8 +381,16 @@ class NetworkServer:
                     
                     self.send_to("UPDATE_HIGHSCORE_TABLE", name, highscores = highscores)
 
+                case "REQUEST_OWN_HIGHSCORE":
+                    process_db = database.Database()
+                    highscore = process_db.get_user_highscore(name)
+                    process_db.close_conn()
+
+                    self.send_to("OWN_HIGHSCORE", name, rating = highscore[0], score = highscore[1], \
+                                 accuracy = highscore[2], time = highscore[3])
+
             to_process.pop(0)   
-        return to_process
+        return to_process, running
 
 #-------------------------RECEIVE-------------------------#
 

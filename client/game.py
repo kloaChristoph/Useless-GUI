@@ -204,6 +204,9 @@ class App:
             match recv.get("command"):
                 case "UPDATE_HIGHSCORE_TABLE":
                     self.update_highscore_table(recv)
+
+                case "OWN_HIGHSCORE":
+                    self.get_own_highscore(recv)
 #------------------------MAINLOOP-----------------------#
 
 
@@ -398,6 +401,7 @@ class App:
             random_button.reset_button()
             self.show_end_msg()
 
+
     def show_end_msg(self) -> None:
         """
         Shows a pop up at the end of the game
@@ -411,9 +415,10 @@ class App:
         -------
         None
         """
-        if self.score > self.highscore:
+        if self.rating > self.highest_rating:
             self.highscore = self.score
             self.highscore_accuracy = self.accuracy
+            self.highest_rating = self.rating
 
             self.client.send_to_server("NEW_HIGHSCORE", self.username, highscore = self.highscore, \
                                         accuracy = self.highscore_accuracy, time = self.duration)
@@ -428,6 +433,24 @@ class App:
 
 
 #------------------------OTHER--------------------------#
+    def get_own_highscore(self, data: dict) -> None:
+        """
+        Gets the highscore of the user from the server
+
+        Parameters
+        ----------
+        data : dict
+            The data the client receives
+
+        Returns
+        -------
+        None
+        """
+        self.highest_rating = data.get("rating")
+        self.highscore = data.get("highscore")
+        self.highscore_accuracy = data.get("accuracy")
+
+
     def create_table(self) -> None:
         """
         Creats the highscore table
