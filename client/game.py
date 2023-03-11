@@ -77,6 +77,10 @@ class App:
         A list of the game buttons (each calls GameButton.check_status)
     highscore_table_label : tkinter.Label
         A heading for the highscore table
+    login_heading : tkinter.Label
+        A heading for the login screen
+    login_subheading : tkinter.Label
+        A subheading for the login screen
     
     Methods
     -------
@@ -247,14 +251,20 @@ class App:
         except AttributeError:
             pass
 
+        self.login_heading = tkinter.Label(self.window, name="login_heading", text="Welcome to the useless-GUI", font=('Arial 22'))
+        self.login_heading.place(x=50, y=20)
+
+        self.login_subheading = tkinter.Label(self.window, name="login_subheading", text="by Hartl, Hell and Holas", font=('Arial 10'))
+        self.login_subheading.place(x=70, y=60)
+
         self.login_button = tkinter.Button(self.window, name="login_button", text="login", command=self.login, height=2, width=10)
         self.login_button.place(x=10, y=350)
 
         self.register_button = tkinter.Button(self.window, name="register_button", text="register", command=self.register_window, height=2, width=10)
         self.register_button.place(x=200, y=350)
 
-        self.username_label = tkinter.Label(self.window, name="username_label", text="Username:",height=3,width=10, font=('Arial 15'))
-        self.username_label.place(x=10, y=70)
+        self.username_label = tkinter.Label(self.window, name="username_label", text="Username:",width=10, font=('Arial 15'))
+        self.username_label.place(x=10, y=95)
 
         self.username_entry = tkinter.Entry(self.window, name="username_entry", font=('Arial 15'))
         self.username_entry.place(x=120, y=95)
@@ -269,6 +279,17 @@ class App:
             if not self.app_running:
                 exit()
             self.window.update()
+
+
+    def back_to_login(self) -> None:
+        try:
+            self.password_confirm_entry.destroy()
+            self.password_confirm_label.destroy()
+        except AttributeError:
+            pass
+
+        self.login_button.config(command=self.login)
+        self.register_button.config(command=self.register_window)
 
 
     def login(self) -> None:
@@ -308,7 +329,7 @@ class App:
         -------
         None
         """
-        self.login_button.config(command=self.login_window)
+        self.login_button.config(command=self.back_to_login)
         self.register_button.config(command=self.register)
 
         self.password_confirm_label = tkinter.Label(self.window, name="confirm_label", text="Confirm:", height=3, width=10, font=('Arial 15'))
