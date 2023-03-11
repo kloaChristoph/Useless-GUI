@@ -405,7 +405,6 @@ class App:
         -------
         None
         """
-        self.calculate_accuracy()
         if self.score > self.highscore:
             self.highscore = self.score
             self.highscore_accuracy = self.accuracy
