@@ -1,3 +1,8 @@
+"""
+In this file the Network part of the server is defined
+~ Hartl Lorenz, Hell Andreas, Holas Christoph
+"""
+
 import json
 import socket
 import database
