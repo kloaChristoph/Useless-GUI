@@ -137,7 +137,7 @@ class NetworkServer:
                     listener = multiprocessing.Process(target=self.recv_in_process, args=(conn, True))
                     listener.start()
                 else:
-                    self.send_to("CONNECTION_REFUSED", name, reason="Username not available!")
+                    self.send_to("CONNECTION_REFUSED", name, conn, reason="Username not available!")
 
             else:
                 continue
