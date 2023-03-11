@@ -101,10 +101,8 @@ class App:
         Updates the highscore table
     show_buttons() -> None
         Creating and showing the buttons needed for the game
-    calculate_score() -> None
-        Iterates through all game buttons and gets the number of the correct and false clicks the user made
-    calculate_accuracy() -> None
-        Calculates the accuracy of the last game
+    calculate_stats() -> None
+        Calculates the stats of the last game
     reset_stats() -> None
         Resets the current game stats
     exit_app() -> None
@@ -151,6 +149,8 @@ class App:
 
         self.create_table()
         self.client.send_to_server("REQUEST_HIGHSCORE_TABLE",self.username)
+
+        self.client.send_to_server("REQUEST_OWN_HIGHSCORE", self.username)
 
         self.show_buttons()
         self.start_button = tkinter.Button(self.window, name="start_button", text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
@@ -387,7 +387,7 @@ class App:
                     self.time_label.config(text=f"Time: {time_left}")
                     self.window.update()
                 
-            self.calculate_score()
+            self.calculate_stats()
             self.game_running = False
             random_button.reset_button()
             self.show_end_msg()
@@ -495,9 +495,9 @@ class App:
                 self.buttons.append(GameButton(self.window, x = x, y = y, text = str(len(self.buttons)+1)))
         
 
-    def calculate_score(self) -> None:
+    def calculate_stats(self) -> None:
         """
-        Iterates through all game buttons and gets the number of the correct and false clicks the user made
+        Calculates the stats of the last game
 
         Parameters
         ----------
@@ -511,25 +511,14 @@ class App:
             self.score += button.right_pressed
             self.missed_clicks += button.false_pressed
     
-
-    def calculate_accuracy(self) -> None:
-        """
-        Calculates the accuracy of the last game
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-        """
         clicks = self.missed_clicks + self.score
         try:
             self.accuracy = round((self.score/clicks) * 100,2)
 
         except ZeroDivisionError:
             self.accuracy = 0
+
+        self.rating = round((self.score*self.accuracy)/(100*self.duration), 3)
  
 
     def reset_stats(self) -> None:
