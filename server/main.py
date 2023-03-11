@@ -12,3 +12,4 @@ if __name__ == "__main__":
     server = NetworkServer()
     
     server.accept_clients(db)
+    db.close_conn()

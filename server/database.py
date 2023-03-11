@@ -1,8 +1,50 @@
+"""
+In this file the database is created and the functions to access the database are defined
+~ Hartl Lorenz, Hell Andreas, Holas Christoph
+"""
+
 import sqlite3
 import bcrypt
 
 class Database:
+    """
+    A class to handle the database
+
+    ...
+
+    Attributes
+    ----------
+    conn : sqlite3.Connection
+        The connection to the database
+    cursor : sqlite3.Cursor
+        The cursor to execute SQL commands
+
+    Methods
+    -------
+    register_user(username: str, password: str) -> bool
+        Checks if there is already a user with the given name if not: stores new account in the database
+    verify_user(username:str, password:str) -> bool
+        Checks if the user entered the correct password
+    updat_highscore(uesrname: str, highscore: int, accuracy: float, time: int) -> None
+        Updates the highscore of the user
+    get_highscores() -> list[list[float, str, int, float, int]]
+        Gets the highscores of all players and returns the top 10
+    close_conn() -> None
+        Closes the connection to the database
+    """
+
     def __init__(self) -> None:
+        """
+        Initialize the database and creates the table if it doesn't exist
+
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        None
+        """
         self.conn = sqlite3.connect("useless_gui.db")
         self.cursor = self.conn.cursor()
 
@@ -31,8 +73,8 @@ class Database:
 
         Returns
         -------
-        successful_login : bool
-            Returns if the password was correct
+        : bool
+            Returns if the registration was successful
         """
         self.cursor.execute("SELECT username FROM accounts WHERE username = ?", (username,))
         db_entry = self.cursor.fetchone()
@@ -110,7 +152,7 @@ class Database:
         Returns
         -------
         sorted_highscores : list[list[str, float, int, float, int]]
-            The top 10 clients in a sorted list (best is index 0) with their rating, name, score, accuracy and time
+            The top 10 clients in a sorted list (best is index 0) with their name, rating, score, accuracy and time
         """
         self.cursor.execute("SElECT username, highscore, accuracy, time from accounts")
         db_entry = self.cursor.fetchall()
@@ -123,6 +165,7 @@ class Database:
 
             sorted_highscores = sorted(highscores, key= lambda client: client[1], reverse=True)
             return sorted_highscores[0:10]
+
 
     def close_conn(self) -> None:
         """
