@@ -601,6 +601,7 @@ class App:
         if tkinter.messagebox.askyesno(title="EXIT", message="Do you really want to exit the app?"):
             self.client.send_to_server("CLOSE_CONNECTION", self.username)
             self.window.destroy()
+            self.client.listener.terminate()
             self.client.client_socket.close()
 #------------------------OTHER--------------------------#
 
