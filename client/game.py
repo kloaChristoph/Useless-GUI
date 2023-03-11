@@ -264,6 +264,8 @@ class App:
         self.password_entry.place(x=120, y=175)
 
         while not self.login_status:
+            if not self.app_running:
+                exit()
             self.window.update()
 
 
