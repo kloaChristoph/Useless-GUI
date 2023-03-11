@@ -76,13 +76,14 @@ class Database:
         : bool
             Returns if the registration was successful
         """
+        #check if there is already a user with the given name
         self.cursor.execute("SELECT username FROM accounts WHERE username = ?", (username,))
         db_entry = self.cursor.fetchone()
         if db_entry:
             db_username = db_entry[0]
             if db_username == username:
                 return False
-        
+        #if not: store new account in the database
         else:
             db_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
             self.cursor.execute("INSERT INTO accounts (username, password, highscore, accuracy, time) \
@@ -114,6 +115,7 @@ class Database:
             successful_login = bcrypt.checkpw(password.encode(), db_password)
             return successful_login
         else:
+            #if the user doesn't exist return False
             return False
         
 
@@ -185,6 +187,7 @@ class Database:
         db_entry = self.cursor.fetchone()
         if db_entry:
             score, accuracy, time = db_entry
+            #calculate the rating to compare with other users
             avg_score_per_sec = round((score*accuracy)/(100*time), 3)
             highscore = [avg_score_per_sec, score, accuracy, time]
             return highscore
@@ -210,10 +213,9 @@ class Database:
 
 if __name__ == "__main__":
     db = Database()
-    
+    #used to test the code
     #db.register_user("admin", "admin")
-    db.updat_highscore("admin", 13, 94.2, 10)
-    db.updat_highscore("christoph", 16, 83.8, 10)
-
+    #db.updat_highscore("admin", 13, 94.2, 10)
+    #db.updat_highscore("christoph", 16, 83.8, 10)
     #db.get_highscores()
     #db.get_user_highscore("admin")
