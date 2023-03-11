@@ -196,9 +196,12 @@ class NetworkClient:
         data : bytes
             The data received
         """
-        length = int.from_bytes(self.client_socket.recv(16), "big")
-        data = self.client_socket.recv(length)
-        return data
+        try:
+            length = int.from_bytes(self.client_socket.recv(16), "big")
+            data = self.client_socket.recv(length)
+            return data
+        except ConnectionResetError:
+            b"{'command': 'CONNECTION_LOST'}"
 
 
     def convert_received_data(self) -> dict | list[dict]:

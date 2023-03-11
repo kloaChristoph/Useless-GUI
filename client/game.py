@@ -215,6 +215,9 @@ class App:
 
                 case "OWN_HIGHSCORE":
                     self.get_own_highscore(recv)
+
+                case "CONNECTION_LOST":
+                    self.conn_lost()
 #------------------------MAINLOOP-----------------------#
 
 
@@ -586,6 +589,26 @@ class App:
             button.right_pressed = 0
             button.false_pressed = 0
        
+
+    def conn_lost(self) -> None:
+        """
+        Show pop up that the connection to the server was lost
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        tkinter.messagebox.showwarning("CONNECTION LOST", message="The connection to the server is lost! \
+                                       \nThe app is going to close.")
+        self.app_running = False
+        self.window.destroy()
+        self.client.listener.terminate()
+        self.client.client_socket.close()
+
 
     def exit_app(self) -> None:
         """
