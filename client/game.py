@@ -180,7 +180,12 @@ class App:
         -------
         None
         """
+        last_highscore_request = time.time()
         while True:
+            if last_highscore_request + 30 <= time.time():
+                self.client.send_to_server("REQUEST_HIGHSCORE_TABLE",self.username)
+                last_highscore_request = time.time()
+
             self.handle_server_commands()
             
             self.window.update()

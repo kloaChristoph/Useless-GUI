@@ -372,7 +372,7 @@ class NetworkServer:
                     highscores = process_db.get_highscores()
 
                     process_db.close_conn()
-                    self.send_to_all("UPDATE_HIGHSCORE_TABLE", highscores = highscores)
+                    self.send_to("UPDATE_HIGHSCORE_TABLE", name, highscores = highscores)
 
                 case "REQUEST_HIGHSCORE_TABLE":
                     process_db = database.Database()
