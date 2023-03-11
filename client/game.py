@@ -40,6 +40,10 @@ class App:
         The all time highscore of the user
     highscore_accuracy : float
         The accuracy the user had when reaching the highscore
+    rating : float
+        The ratinf of th last game (is used to compare the highscore)
+    highest_rating : float
+        The highest rating the user had all time
 
     exit_button : tkinter.Button
         Sends the server a command to close the connection if loged in and closes the window (calls exit_app)
@@ -146,6 +150,8 @@ class App:
         self.accuracy: float = 100
         self.highscore: int = 0
         self.highscore_accuracy: float = 0
+        self.rating: float = 0
+        self.highest_rating: float = 0
 
         self.create_table()
         self.client.send_to_server("REQUEST_HIGHSCORE_TABLE",self.username)
