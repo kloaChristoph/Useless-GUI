@@ -314,6 +314,8 @@ class App:
             self.username_label.destroy()
             self.password_entry.destroy()
             self.password_label.destroy()
+            self.login_heading.destroy()
+            self.login_subheading.destroy()
 
 
     def register_window(self) -> None:
