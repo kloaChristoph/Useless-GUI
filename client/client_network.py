@@ -6,7 +6,7 @@ In this file the Network part of the client is defined
 import json
 import socket
 import multiprocessing
-
+#aa
 from typing import Any
 
 
