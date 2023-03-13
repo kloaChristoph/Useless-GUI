@@ -366,6 +366,8 @@ class App:
             self.password_label.destroy()
             self.password_confirm_entry.destroy()
             self.password_confirm_label.destroy()
+            self.login_heading.destroy()
+            self.login_subheading.destroy()
 
 
     def setup_connection(self, register: bool) -> None:
