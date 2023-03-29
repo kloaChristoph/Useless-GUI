@@ -65,9 +65,13 @@ class NetworkClient:
         None
         """
         self.ENCODING = "utf-8"
+        #A queue to store the commands received when receiving data
         self.que: multiprocessing.Queue = multiprocessing.Queue()
+        #allows the communication between the client and the server
         self.client_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #The process to receive data from the server
         self.listener: multiprocessing.Process = multiprocessing.Process(target=self.recv_in_process, daemon=True)
+        #Indicators if listener is running and if client is connected to the server
         self.running: bool = True
         self.connected: bool = False
 
@@ -95,11 +99,13 @@ class NetworkClient:
         -------
         self.connected: bool
             Returns if the connection was successful
+        reason: str | None
+            The reason why the connection was refused
         """
         try:
             self.client_socket.connect((host, port))
         except ConnectionRefusedError as error:
-            return error
+            return error, None
     
         if register:
             self.send_to_server(command="REGISTER", username=name, password=pwd)
@@ -204,7 +210,7 @@ class NetworkClient:
             return b'{"command": "CONNECTION_LOST"}'
 
 
-    def convert_received_data(self) -> dict | list[dict]:
+    def convert_received_data(self) -> dict | None:
         """
         Receive data from the server and convert it to a command
         (Multiple commands can be received at once)
@@ -217,24 +223,15 @@ class NetworkClient:
         -------
         : dict 
             A command received from the server
-        commands : list[dict]
-            A list of commands received from the server
+        : None
+            If the received data is not a valid json
         """
         data = self.recv().decode()
         print(f"[{'RECEIVED':<10}] {data}")
         try:
             return json.loads(data)
         except json.decoder.JSONDecodeError:
-            commands = []
-            commands_len = data.count("command")
-            # Remove first and last {,} to be sure to add the {,} afterwards in the for loop
-            partial_commands = data[1:-1].split("}{")
-            if len(partial_commands) == commands_len:
-                for command in partial_commands:
-                    # Add the {, } to the command again to make sure it is json loadable
-                    commands.append(json.loads("{" + command + "}"))
-            return commands
-
+            return None
 
     def recv_in_process(self) -> None:
         """
