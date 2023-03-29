@@ -141,17 +141,22 @@ class App:
         self.client = NetworkClient()
 
         self.window: tkinter.Tk = window
+        self.window.title(window_title)
+
         self.login_status: bool = False
         self.app_running: bool = True
         self.username: str = ""
 
+        #creating and placing the exit button
         self.exit_button = tkinter.Button(self.window, name="exit_button", text="Exit", command=self.exit_app, height=2, width=10)
         self.exit_button.place(x=400, y=350)
 
         self.login_window()
 
-        self.window.title(window_title)
+        #resize the window
         self.window.geometry("700x500")
+
+        #creating atributs for the game stats
         self.game_running: bool = False
         self.duration: int = 10
         self.score: int = 0
@@ -165,12 +170,17 @@ class App:
         self.create_table()
         self.client.send_to_server("REQUEST_HIGHSCORE_TABLE",self.username)
 
+        #requests the own all time highscore to compare it with the current scores
         self.client.send_to_server("REQUEST_OWN_HIGHSCORE", self.username)
 
         self.show_buttons()
-        self.start_button = tkinter.Button(self.window, name="start_button", text="Start", command=self.start_game, height=2, width=10).place(x=50, y=400)
+        #creating and placing the start button
+        self.start_button = tkinter.Button(self.window, name="start_button", text="Start", command=self.start_game, height=2, width=10)
+        self.start_button.place(x=50, y=400)
+        #creating and placing the time label (shows the time left in the game)
         self.time_label = tkinter.Label(self.window, name="start_label", text=f"Time: {self.duration}", height=2, width=10)
         self.time_label.place(x=300, y=400)
+        #replacing the exit button
         self.exit_button.place(x=550, y=400)
 
         self.start_loop()
@@ -189,8 +199,11 @@ class App:
         -------
         None
         """
+        #timestamp of the last highscore request
         last_highscore_request = time.time()
+        #mainloop
         while self.app_running:
+            #request highscore table every 30 seconds
             if last_highscore_request + 30 <= time.time():
                 self.client.send_to_server("REQUEST_HIGHSCORE_TABLE",self.username)
                 last_highscore_request = time.time()
@@ -242,15 +255,10 @@ class App:
         -------
         None
         """
-        
+        #resize the window
         self.window.geometry("500x400")
 
-        try:
-            self.password_confirm_entry.destroy()
-            self.password_confirm_label.destroy()
-        except AttributeError:
-            pass
-
+        #creating and placing the widgets
         self.login_heading = tkinter.Label(self.window, name="login_heading", text="Welcome to the useless-GUI", font=('Arial 22'))
         self.login_heading.place(x=50, y=20)
 
@@ -275,6 +283,7 @@ class App:
         self.password_entry = tkinter.Entry(self.window, show="*", name="password_entry", font=('Arial 15'))
         self.password_entry.place(x=120, y=175)
 
+        #mainloop for login screen
         while not self.login_status:
             if not self.app_running:
                 exit()
@@ -282,12 +291,14 @@ class App:
 
 
     def back_to_login(self) -> None:
+        #delete the widgets that are no longer needed
         try:
             self.password_confirm_entry.destroy()
             self.password_confirm_label.destroy()
         except AttributeError:
             pass
 
+        #change the function of the buttons
         self.login_button.config(command=self.login)
         self.register_button.config(command=self.register_window)
 
@@ -307,6 +318,7 @@ class App:
         """
         self.setup_connection(register=False)
         
+        #destroying the widgets needed for the login screen when login was successful
         if self.login_status:
             self.login_button.destroy()
             self.register_button.destroy()
@@ -331,9 +343,11 @@ class App:
         -------
         None
         """
+        #change the function of the buttons
         self.login_button.config(command=self.back_to_login)
         self.register_button.config(command=self.register)
 
+        #creating and placing the extra widgets needed for the register screen
         self.password_confirm_label = tkinter.Label(self.window, name="confirm_label", text="Confirm:", height=3, width=10, font=('Arial 15'))
         self.password_confirm_label.place(x=10, y=230)
 
@@ -357,6 +371,7 @@ class App:
         """
         self.setup_connection(register=True)
 
+        #destroying the widgets needed for the register screen when login was successful
         if self.login_status:
             self.login_button.destroy()
             self.register_button.destroy()
@@ -432,17 +447,20 @@ class App:
 
         #Checking if there is already a game and starts one if there is not
         if not self.game_running:
+            #resetting the current stats
             self.reset_stats()
             start_time = time.time()
             self.game_running = True
 
             #Runs the game as long as the timer is runnning
             while start_time + self.duration >= time.time():
+                #pick a random button and changes its color
                 random_button: GameButton = random.choice(self.buttons)
                 random_button.change_color()
 
                 #Updates the screen and waits until the right button is pressed
                 while random_button.highlighted == True and start_time + self.duration >= time.time():
+                    #updating the time label
                     time_left = str(int(self.duration-(time.time()-start_time)))
                     self.time_label.config(text=f"Time: {time_left}")
                     self.window.update()
@@ -568,11 +586,14 @@ class App:
         -------
         None
         """
+        #a list of all the game buttons
         self.buttons: list[GameButton] = []
+        #the x and y positions of the buttons
         x_pos = [50, 130, 210]
         y_pos = [50, 136, 222]
         for y in y_pos:
             for x in x_pos:
+                #creating the buttons and adding them to the list
                 self.buttons.append(GameButton(self.window, x = x, y = y, text = str(len(self.buttons)+1)))
         
 
