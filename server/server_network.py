@@ -70,7 +70,9 @@ class NetworkServer:
         """
         self.clients: dict[str, ClientData] = {}
         self.ENCODING = "utf-8"
+        #allows communication between client and server
         self.server_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #is used to remove clients from the clients dictionary
         self.remove_client_queue: multiprocessing.Queue = multiprocessing.Queue()
 
         print(f"[{'LISTENING':<10}] Bound to the port: {host}:{port}")
@@ -104,8 +106,8 @@ class NetworkServer:
 
             while not self.remove_client_queue.empty():
                 #if client disconnected the name of the client will be in the queue
-                name: str = self.remove_client_queue.get()
-                self.clients.pop(name)
+                name_to_remove: str = self.remove_client_queue.get()
+                self.clients.pop(name_to_remove)
 
             if name in self.clients:
                 #there is already a client with that name
